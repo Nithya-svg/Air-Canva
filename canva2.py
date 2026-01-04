@@ -3,7 +3,7 @@ import numpy as np
 import mediapipe as mp
 import time
 
-# ================== MEDIAPIPE SETUP ==================
+
 mp_hands = mp.solutions.hands
 hands = mp_hands.Hands(
     max_num_hands=1,
@@ -12,16 +12,14 @@ hands = mp_hands.Hands(
 )
 mp_draw = mp.solutions.drawing_utils
 
-# ================== CAMERA SETUP ==================
 WIDTH, HEIGHT = 640, 480
 cap = cv2.VideoCapture(0)
 cap.set(3, WIDTH)
 cap.set(4, HEIGHT)
 
-# ================== CANVAS ==================
 canvas = np.zeros((HEIGHT, WIDTH, 3), dtype=np.uint8)
 
-# ================== COLORS ==================
+
 colors = [
     ("BLUE",   (255, 0, 0)),
     ("GREEN",  (0, 255, 0)),
@@ -39,14 +37,13 @@ brush_thickness = 6
 eraser_thickness = 60
 prev_x, prev_y = 0, 0
 
-# ================== FPS ==================
+
 p_time = 0
 
-# ================== SAVE CONTROL ==================
-last_save_time = 0
-save_delay = 1.5  # seconds
 
-# ================== DRAW SIDE PALETTE ==================
+last_save_time = 0
+save_delay = 1.5 
+
 def draw_side_palette(img):
     block_height = HEIGHT // len(colors)
     for i, (name, col) in enumerate(colors):
@@ -64,7 +61,7 @@ def draw_side_palette(img):
             2
         )
 
-# ================== FINGER DETECTION ==================
+
 def fingers_up(lm):
     fingers = []
 
@@ -78,7 +75,7 @@ def fingers_up(lm):
 
     return fingers  # [thumb, index, middle, ring, pinky]
 
-# ================== MAIN LOOP ==================
+
 while True:
     success, frame = cap.read()
     if not success:
@@ -102,7 +99,7 @@ while True:
 
             current_time = time.time()
 
-            # ================== SAVE GESTURE ==================
+            
             if fingers == [True, True, True, False, False]:
                 if current_time - last_save_time > save_delay:
                     cv2.imwrite("air_canvas_gesture_save.png", canvas)
@@ -117,14 +114,14 @@ while True:
                             3)
                 prev_x, prev_y = 0, 0
 
-            # ================== COLOR SELECTION ==================
+          
             elif x < 130:
                 index = y // (HEIGHT // len(colors))
                 if index < len(colors):
                     draw_color = colors[index][1]
                 prev_x, prev_y = 0, 0
 
-            # ================== ERASER ==================
+           
             elif fingers == [False, False, False, False, False]:
                 if prev_x == 0 and prev_y == 0:
                     prev_x, prev_y = x, y
@@ -133,7 +130,6 @@ while True:
                          (0, 0, 0), eraser_thickness)
                 prev_x, prev_y = x, y
 
-            # ================== DRAW ==================
             elif fingers == [False, True, False, False, False]:
                 if prev_x == 0 and prev_y == 0:
                     prev_x, prev_y = x, y
@@ -142,7 +138,7 @@ while True:
                          draw_color, brush_thickness)
                 prev_x, prev_y = x, y
 
-            # ================== PAUSE ==================
+            
             elif fingers == [False, True, True, False, False]:
                 prev_x, prev_y = 0, 0
                 cv2.circle(frame, (x, y), 8, (255, 255, 255), cv2.FILLED)
@@ -153,7 +149,7 @@ while True:
             mp_draw.draw_landmarks(frame, hand_landmarks,
                                    mp_hands.HAND_CONNECTIONS)
 
-    # ================== MERGE CANVAS ==================
+    
     gray = cv2.cvtColor(canvas, cv2.COLOR_BGR2GRAY)
     _, inv = cv2.threshold(gray, 20, 255, cv2.THRESH_BINARY_INV)
     inv = cv2.cvtColor(inv, cv2.COLOR_GRAY2BGR)
@@ -161,7 +157,7 @@ while True:
     frame = cv2.bitwise_and(frame, inv)
     frame = cv2.bitwise_or(frame, canvas)
 
-    # ================== FPS ==================
+    
     c_time = time.time()
     fps = int(1 / (c_time - p_time)) if c_time != p_time else 0
     p_time = c_time
@@ -176,3 +172,4 @@ while True:
 
 cap.release()
 cv2.destroyAllWindows()
+
